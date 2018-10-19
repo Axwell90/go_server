@@ -12,15 +12,6 @@ import (
 	"strconv"
 )
 
-type User struct {
-	id         int32
-	email      string
-	first_name string
-	last_name  string
-	sex        string
-	birth_date string
-}
-
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
 }

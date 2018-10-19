@@ -10,7 +10,7 @@ type Model struct {
 }
 
 func (m *Model) Validate() bool {
-	if m.Id == 0 {
+	if m.Id <= 0 {
 		return false
 	}
 

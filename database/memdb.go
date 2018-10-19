@@ -18,6 +18,21 @@ func Init() {
 					},
 				},
 			},
+			"users": {
+				Name: "users",
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.UintFieldIndex{Field: "Id"},
+					},
+					"sex": {
+						Name:    "sex",
+						Unique:  false,
+						Indexer: &memdb.StringFieldIndex{Field: "Sex"},
+					},
+				},
+			},
 		},
 	}
 	// Create a new data base
