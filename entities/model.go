@@ -29,22 +29,22 @@ func (m *Model) Validate() bool {
 	return true
 }
 
-func (m *Model) Get(id uint) (*Model, error) {
+func (m *Model) Get(id int) (*Model, error) {
 
 	db := database.GetStorage()
 
 	txn := db.Txn(false)
 	defer txn.Abort()
 
-	raw, err := txn.First("models", "id", id)
-	if err != nil {
+	raw, err := txn.First("models", "id", uint(id))
+	if err != nil || raw == nil {
 		return nil, err
 	}
 
 	return raw.(*Model), nil
 }
 
-func (m *Model) Create(data *Model) error {
+func (m *Model) Create() error {
 
 	db := database.GetStorage()
 
@@ -59,7 +59,7 @@ func (m *Model) Create(data *Model) error {
 	return nil
 }
 
-func (m *Model) Update(data *Model) error {
+func (m *Model) Update() error {
 
 	db := database.GetStorage()
 
