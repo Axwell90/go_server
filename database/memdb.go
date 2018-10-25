@@ -33,6 +33,31 @@ func Init() {
 					},
 				},
 			},
+			"reviews": {
+				Name: "reviews",
+				Indexes: map[string]*memdb.IndexSchema{
+					"id": {
+						Name:    "id",
+						Unique:  true,
+						Indexer: &memdb.UintFieldIndex{Field: "Id"},
+					},
+					"model": {
+						Name:    "model",
+						Unique:  false,
+						Indexer: &memdb.UintFieldIndex{Field: "Model"},
+					},
+					"user": {
+						Name:    "user",
+						Unique:  false,
+						Indexer: &memdb.UintFieldIndex{Field: "User"},
+					},
+					"created": {
+						Name:    "created",
+						Unique:  false,
+						Indexer: &memdb.UintFieldIndex{Field: "Created"},
+					},
+				},
+			},
 		},
 	}
 	// Create a new data base

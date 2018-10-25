@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/mux"
 	"go_server/database"
 	"go_server/entities"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -28,107 +26,47 @@ func main() {
 
 	database.Init()
 
-	m := &entities.Model{
-		Id:    1,
-		Name:  "jetta",
-		Brand: "vw",
-		Year:  2015,
-	}
-	if err := m.Create(); err != nil {
-		panic(err)
-	}
-
-	u := &entities.User{
-		Id:        1,
-		Email:     "eka@kodix.ru",
-		FirstName: "E",
-		LastName:  "K",
-		Sex:       "male",
-		BirthDate: 123123123,
-	}
-	if err := u.Create(); err != nil {
-		panic(err)
-	}
+	TestData()
 
 	r := mux.NewRouter()
 	//r.Headers("Content-Type", "application/json")
 	s := r.PathPrefix("/model").Subrouter()
 
 	s.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
+		//vars := mux.Vars(r)
+		//id, err := strconv.Atoi(vars["id"])
+		//if err != nil {
+		//	respondWithError(w, http.StatusBadRequest, "Invalid request data")
+		//	return
+		//}
+
+		//b, err := ioutil.ReadAll(r.Body)
+		////b = data
+		//if err == nil {
+		//	err = json.Unmarshal(b, &model)
+		//}
+		//r.Body.Close()
+		//handlers.GetModelHandler()
 
 		item := entities.Model{}
-		model, err := item.Get(id)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting model")
+		model, err := item.Get_(r)
+
+		if model == nil || err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		if model == nil {
-			respondWithError(w, http.StatusBadRequest, "Model not found")
-			return
-		}
+		//if model == nil {
+		//	respondWithError(w, http.StatusBadRequest, err)
+		//	return
+		//}
 
 		respondWithJSON(w, http.StatusOK, model)
 	}).Methods("GET")
 
 	s.HandleFunc("/{id}/mark", func(w http.ResponseWriter, r *http.Request) {
-		data := []byte(`{"Id":1,"Year":2010}`)
 
-		updModel := entities.Model{}
-
-		b, err := ioutil.ReadAll(r.Body)
-		b = data
-		if err == nil {
-			err = json.Unmarshal(b, &updModel)
-		}
-		r.Body.Close()
-
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
-		id := updModel.Id
-
-		item := entities.Model{}
-		model, err := item.Get(int(id))
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting model")
-			return
-		}
-
-		if model == nil {
-			respondWithError(w, http.StatusBadRequest, "Model not found")
-			return
-		}
-
-		if updModel.Name != "" {
-			model.Name = updModel.Name
-		}
-
-		if updModel.Brand != "" {
-			model.Brand = updModel.Brand
-		}
-
-		if updModel.Year >= 0 {
-			model.Year = updModel.Year
-		}
-
-		if model.Validate() != true {
-			respondWithError(w, http.StatusBadRequest, "New model validate error")
-			return
-		}
-
-		err = model.Update()
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error update model")
-			return
-		}
+		model := entities.Model{}
 
 		respondWithJSON(w, http.StatusOK, model)
 	}).Methods("GET")
@@ -137,40 +75,41 @@ func main() {
 	s.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 
 		//data := []byte(`{"Id":2, "Name":"tiguan","Brand":"vw","Year":2016}`)
+		/*
+			model := entities.Model{}
 
+			b, err := ioutil.ReadAll(r.Body)
+			//b = data
+			if err == nil {
+				err = json.Unmarshal(b, &model)
+			}
+			r.Body.Close()
+
+			if err != nil {
+				respondWithError(w, http.StatusBadRequest, "Invalid request data")
+				return
+			}
+
+			item := entities.Model{}
+			check, err := item.Get(int(model.Id))
+			if check != nil {
+				respondWithError(w, http.StatusBadRequest, "Model is already exist")
+				return
+			}
+
+			if model.Validate() != true {
+				respondWithError(w, http.StatusBadRequest, "Validate error")
+				return
+			}
+		*/
 		model := entities.Model{}
-
-		b, err := ioutil.ReadAll(r.Body)
-		//b = data
-		if err == nil {
-			err = json.Unmarshal(b, &model)
-		}
-		r.Body.Close()
-
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
+		err := model.Create_(r)
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		item := entities.Model{}
-		check, err := item.Get(int(model.Id))
-		if check != nil {
-			respondWithError(w, http.StatusBadRequest, "Model is already exist")
-			return
-		}
-
-		if model.Validate() != true {
-			respondWithError(w, http.StatusBadRequest, "Validate error")
-			return
-		}
-
-		err = model.Create()
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error add model")
-			return
-		}
-
-		respondWithJSON(w, http.StatusOK, check)
+		respondWithJSON(w, http.StatusOK, "{}")
 
 	}).Methods("POST")
 
@@ -178,7 +117,7 @@ func main() {
 	s.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		//data := []byte(`{"Id":1,"Year":2010}`)
 
-		updModel := entities.Model{}
+		/*updModel := entities.Model{}
 
 		b, err := ioutil.ReadAll(r.Body)
 		//b = data
@@ -223,12 +162,17 @@ func main() {
 		}
 
 		err = model.Update()
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error update model")
+		*/
+
+		model := entities.Model{}
+		err := model.Update_(r)
+
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		respondWithJSON(w, http.StatusOK, model)
+		respondWithJSON(w, http.StatusOK, "{}")
 	}).Methods("POST")
 
 	q := r.PathPrefix("/user").Subrouter()
@@ -244,12 +188,12 @@ func main() {
 		item := entities.User{}
 		user, err := item.Get(id)
 		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting model")
+			respondWithError(w, http.StatusBadRequest, "Error getting user")
 			return
 		}
 
 		if user == nil {
-			respondWithError(w, http.StatusBadRequest, "Model not found")
+			respondWithError(w, http.StatusBadRequest, "User not found")
 			return
 		}
 
@@ -257,58 +201,8 @@ func main() {
 	}).Methods("GET")
 
 	q.HandleFunc("/{id}/reviews", func(w http.ResponseWriter, r *http.Request) {
-		data := []byte(`{"Id":1,"Year":2010}`)
 
-		updModel := entities.Model{}
-
-		b, err := ioutil.ReadAll(r.Body)
-		b = data
-		if err == nil {
-			err = json.Unmarshal(b, &updModel)
-		}
-		r.Body.Close()
-
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
-		id := updModel.Id
-
-		item := entities.Model{}
-		model, err := item.Get(int(id))
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting model")
-			return
-		}
-
-		if model == nil {
-			respondWithError(w, http.StatusBadRequest, "Model not found")
-			return
-		}
-
-		if updModel.Name != "" {
-			model.Name = updModel.Name
-		}
-
-		if updModel.Brand != "" {
-			model.Brand = updModel.Brand
-		}
-
-		if updModel.Year >= 0 {
-			model.Year = updModel.Year
-		}
-
-		if model.Validate() != true {
-			respondWithError(w, http.StatusBadRequest, "New model validate error")
-			return
-		}
-
-		err = model.Update()
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error update model")
-			return
-		}
-
+		model := entities.Model{}
 		respondWithJSON(w, http.StatusOK, model)
 	}).Methods("GET")
 
@@ -407,105 +301,65 @@ func main() {
 		respondWithJSON(w, http.StatusOK, user)
 	}).Methods("POST")
 
-	err := http.ListenAndServe(":8080", r) // задаем слушать порт
-	if err != nil {
-		log.Fatal("ListenAndServer error: ", err)
-	}
+	w := r.PathPrefix("/review").Subrouter()
 
-	//.Set("Content-Type", "application/json")
-
-	//mm := Model{2,"tiguan", "vw", 2016}
-
-	//// Create a write transaction
-	//txn := db.Txn(true)
-
-	m.Brand = "nissan"
-	m.Update()
-
-	emptyModel := entities.Model{}
-	model, err := emptyModel.Get(1)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Hello TYT %v!", model)
-
-	//if err := txn.Insert("models", m); err != nil {
-	//	panic(err)
-	//}
-
-	//if mm.Validate() != true {
-	//	// TODO: validate error
-	//}
-	//if err := txn.Insert("models", mm); err != nil {
-	//	panic(err)
-	//}
-	//
-	//// Commit the transaction
-	//txn.Commit()
-
-	{
-		/*txn := db.Txn(false)
-		defer txn.Abort()
-
-		//raw, err := txn.First("models", "id", "joe@aol.com")
-		//if err != nil {
-		//	panic(err)
-		//}
-
-		raw, err := txn.Get("models", "id", uint(1))
+	w.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
 		if err != nil {
-			panic(err)
+			respondWithError(w, http.StatusBadRequest, "Invalid request data")
+			return
 		}
 
-		for item := raw.Next(); item != nil; item = raw.Next() {
-			fmt.Printf("Hello %v!", item)
-		}*/
+		item := entities.Review{}
+		review, err := item.Get(id)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Error getting review")
+			return
+		}
 
-		//fmt.Printf("Hello %s!", raw.(*Model))
+		if review == nil {
+			respondWithError(w, http.StatusBadRequest, "Review not found")
+			return
+		}
 
-		//mmm := Model{3,"jetta", "vw", 2015}
+		respondWithJSON(w, http.StatusOK, review)
+	}).Methods("GET")
+
+}
+
+func TestData() {
+	db := database.GetStorage()
+	txn := db.Txn(true)
+
+	m := &entities.Model{
+		Id:    1,
+		Name:  "jetta",
+		Brand: "vw",
+		Year:  2015,
 	}
+	txn.Insert("models", m)
 
-	// Insert a new person
-	//p := &Person{"joe@aol.com", "Joe", 30}
-	//if err := txn.Insert("person", p); err != nil {
-	//	panic(err)
-	//}
+	u := &entities.User{
+		Id:        1,
+		Email:     "eka@kodix.ru",
+		FirstName: "E",
+		LastName:  "K",
+		Sex:       "male",
+		BirthDate: 123123123,
+	}
+	txn.Insert("users", u)
 
-	// Commit the transaction
-	//txn.Commit()
-	//
-	//// Create read-only transaction
-	//txn = db.Txn(false)
-	//defer txn.Abort()
-	//
-	//raw, err := txn.Get("models", "id")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for item := raw.Next(); item != nil; item = raw.Next() {
-	//	fmt.Printf("Hello %v!", item)
-	//}
+	rv := &entities.Review{
+		Id:      1,
+		User:    1,
+		Model:   1,
+		Created: 123,
+		Mark:    3,
+	}
+	txn.Insert("reviews", rv)
 
-	// Lookup by email
-	//raw, err := txn.First("person", "id", "joe@aol.com")
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	//fmt.Printf("Hello %s!", raw.(*Person))
-
-	//raw, err := txn.Get("person", "id", "joe@aol.com")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for item := raw.Next(); item != nil; item = raw.Next() {
-	//	fmt.Printf("Hello %s!", item)
-	//}
-
+	txn.Commit()
 }
 
 /*
