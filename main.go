@@ -5,7 +5,7 @@ import (
 	"github.com/mux"
 	"go_server/database"
 	"go_server/entities"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -81,22 +81,11 @@ func main() {
 	q := r.PathPrefix("/user").Subrouter()
 
 	q.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
-
 		item := entities.User{}
-		user, err := item.Get(id)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting user")
-			return
-		}
+		user, err := item.Get(r)
 
-		if user == nil {
-			respondWithError(w, http.StatusBadRequest, "User not found")
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -110,94 +99,23 @@ func main() {
 	}).Methods("GET")
 
 	q.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
-
 		user := entities.User{}
+		err := user.Create(r)
 
-		b, err := ioutil.ReadAll(r.Body)
-		if err == nil {
-			err = json.Unmarshal(b, &user)
-		}
-		r.Body.Close()
-
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		item := entities.User{}
-		check, err := item.Get(int(user.Id))
-		if check != nil {
-			respondWithError(w, http.StatusBadRequest, "User is already exist")
-			return
-		}
-
-		if user.Validate() != true {
-			respondWithError(w, http.StatusBadRequest, "Validate error")
-			return
-		}
-
-		err = user.Create()
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error add user")
-			return
-		}
-
-		respondWithJSON(w, http.StatusOK, check)
-
+		respondWithJSON(w, http.StatusOK, "{}")
 	}).Methods("POST")
 
 	q.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		user := entities.User{}
+		err := user.Update(r)
 
-		updUser := entities.User{}
-
-		b, err := ioutil.ReadAll(r.Body)
-		if err == nil {
-			err = json.Unmarshal(b, &updUser)
-		}
-		r.Body.Close()
-
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
-		id := updUser.Id
-
-		item := entities.User{}
-		user, err := item.Get(int(id))
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting user")
-			return
-		}
-
-		if user == nil {
-			respondWithError(w, http.StatusBadRequest, "User not found")
-			return
-		}
-
-		if updUser.Email != "" {
-			user.Email = updUser.Email
-		}
-
-		if updUser.FirstName != "" {
-			user.FirstName = updUser.FirstName
-		}
-
-		if updUser.LastName != "" {
-			user.LastName = updUser.LastName
-		}
-
-		if updUser.Sex != "" {
-			user.Sex = updUser.Sex
-		}
-
-		if user.Validate() != true {
-			respondWithError(w, http.StatusBadRequest, "New user validate error")
-			return
-		}
-
-		err = user.Update()
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error update user")
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -228,6 +146,11 @@ func main() {
 
 		respondWithJSON(w, http.StatusOK, review)
 	}).Methods("GET")
+
+	err := http.ListenAndServe(":8080", r) // задаем слушать порт
+	if err != nil {
+		log.Fatal("ListenAndServer error: ", err)
+	}
 
 }
 
