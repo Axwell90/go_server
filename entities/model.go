@@ -36,7 +36,22 @@ func (m *Model) Validate() bool {
 	return true
 }
 
-func (m *Model) Get_(r *http.Request) (*Model, string) {
+func checkExistModel(id int) uint {
+
+	db := database.GetStorage()
+
+	txn := db.Txn(false)
+	defer txn.Abort()
+
+	raw, err := txn.First("models", "id", uint(id))
+	if err != nil || raw == nil {
+		return 0
+	}
+
+	return raw.(*Model).Id
+}
+
+func (m *Model) Get(r *http.Request) (*Model, string) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -62,37 +77,7 @@ func (m *Model) Get_(r *http.Request) (*Model, string) {
 	return raw.(*Model), ""
 }
 
-//func (m *Model) Get(id int) (*Model, error) {
-//
-//	db := database.GetStorage()
-//
-//	txn := db.Txn(false)
-//	defer txn.Abort()
-//
-//	raw, err := txn.First("models", "id", uint(id))
-//	if err != nil || raw == nil {
-//		return nil, err
-//	}
-//
-//	return raw.(*Model), nil
-//}
-
-func checkExistModel(id int) uint {
-
-	db := database.GetStorage()
-
-	txn := db.Txn(false)
-	defer txn.Abort()
-
-	raw, err := txn.First("models", "id", uint(id))
-	if err != nil || raw == nil {
-		return 0
-	}
-
-	return raw.(*Model).Id
-}
-
-func (m *Model) Create_(r *http.Request) string {
+func (m *Model) Create(r *http.Request) string {
 	model := &Model{}
 
 	b, err := ioutil.ReadAll(r.Body)
@@ -127,7 +112,7 @@ func (m *Model) Create_(r *http.Request) string {
 	return ""
 }
 
-func (m *Model) Update_(r *http.Request) string {
+func (m *Model) Update(r *http.Request) string {
 	updModel := Model{}
 
 	b, err := ioutil.ReadAll(r.Body)
@@ -191,33 +176,3 @@ func (m *Model) Update_(r *http.Request) string {
 
 	return ""
 }
-
-func (m *Model) Create() error {
-
-	db := database.GetStorage()
-
-	txn := db.Txn(true)
-
-	if err := txn.Insert("models", m); err != nil {
-		return err
-	}
-
-	txn.Commit()
-
-	return nil
-}
-
-//func (m *Model) Update() error {
-//
-//	db := database.GetStorage()
-//
-//	txn := db.Txn(true)
-//
-//	if err := txn.Insert("models", m); err != nil {
-//		return err
-//	}
-//
-//	txn.Commit()
-//
-//	return nil
-//}

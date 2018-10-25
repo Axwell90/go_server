@@ -33,33 +33,13 @@ func main() {
 	s := r.PathPrefix("/model").Subrouter()
 
 	s.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		//vars := mux.Vars(r)
-		//id, err := strconv.Atoi(vars["id"])
-		//if err != nil {
-		//	respondWithError(w, http.StatusBadRequest, "Invalid request data")
-		//	return
-		//}
-
-		//b, err := ioutil.ReadAll(r.Body)
-		////b = data
-		//if err == nil {
-		//	err = json.Unmarshal(b, &model)
-		//}
-		//r.Body.Close()
-		//handlers.GetModelHandler()
-
 		item := entities.Model{}
-		model, err := item.Get_(r)
+		model, err := item.Get(r)
 
-		if model == nil || err != "" {
+		if err != "" {
 			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
-
-		//if model == nil {
-		//	respondWithError(w, http.StatusBadRequest, err)
-		//	return
-		//}
 
 		respondWithJSON(w, http.StatusOK, model)
 	}).Methods("GET")
@@ -73,99 +53,22 @@ func main() {
 
 	// ADD
 	s.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
-
-		//data := []byte(`{"Id":2, "Name":"tiguan","Brand":"vw","Year":2016}`)
-		/*
-			model := entities.Model{}
-
-			b, err := ioutil.ReadAll(r.Body)
-			//b = data
-			if err == nil {
-				err = json.Unmarshal(b, &model)
-			}
-			r.Body.Close()
-
-			if err != nil {
-				respondWithError(w, http.StatusBadRequest, "Invalid request data")
-				return
-			}
-
-			item := entities.Model{}
-			check, err := item.Get(int(model.Id))
-			if check != nil {
-				respondWithError(w, http.StatusBadRequest, "Model is already exist")
-				return
-			}
-
-			if model.Validate() != true {
-				respondWithError(w, http.StatusBadRequest, "Validate error")
-				return
-			}
-		*/
 		model := entities.Model{}
-		err := model.Create_(r)
+		err := model.Create(r)
+
 		if err != "" {
 			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
 		respondWithJSON(w, http.StatusOK, "{}")
-
 	}).Methods("POST")
 
 	// EDIT
 	s.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		//data := []byte(`{"Id":1,"Year":2010}`)
-
-		/*updModel := entities.Model{}
-
-		b, err := ioutil.ReadAll(r.Body)
-		//b = data
-		if err == nil {
-			err = json.Unmarshal(b, &updModel)
-		}
-		r.Body.Close()
-
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
-		id := updModel.Id
-
-		item := entities.Model{}
-		model, err := item.Get(int(id))
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting model")
-			return
-		}
-
-		if model == nil {
-			respondWithError(w, http.StatusBadRequest, "Model not found")
-			return
-		}
-
-		if updModel.Name != "" {
-			model.Name = updModel.Name
-		}
-
-		if updModel.Brand != "" {
-			model.Brand = updModel.Brand
-		}
-
-		if updModel.Year >= 0 {
-			model.Year = updModel.Year
-		}
-
-		if model.Validate() != true {
-			respondWithError(w, http.StatusBadRequest, "New model validate error")
-			return
-		}
-
-		err = model.Update()
-		*/
 
 		model := entities.Model{}
-		err := model.Update_(r)
+		err := model.Update(r)
 
 		if err != "" {
 			respondWithError(w, http.StatusBadRequest, err)
