@@ -45,7 +45,7 @@ func (u *User) Get(id int) (*User, error) {
 	txn := db.Txn(false)
 	defer txn.Abort()
 
-	raw, err := txn.First("user", "id", uint(id))
+	raw, err := txn.First("users", "id", uint(id))
 	if err != nil || raw == nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func (u *User) Create() error {
 
 	txn := db.Txn(true)
 
-	if err := txn.Insert("user", u); err != nil {
+	if err := txn.Insert("users", u); err != nil {
 		return err
 	}
 
@@ -74,7 +74,7 @@ func (u *User) Update() error {
 
 	txn := db.Txn(true)
 
-	if err := txn.Insert("user", u); err != nil {
+	if err := txn.Insert("users", u); err != nil {
 		return err
 	}
 
