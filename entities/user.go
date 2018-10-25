@@ -57,7 +57,7 @@ func checkExistUser(id int) uint {
 		return 0
 	}
 
-	return raw.(*Model).Id
+	return raw.(*User).Id
 }
 
 func (u *User) Get(r *http.Request) (*User, string) {
@@ -112,7 +112,7 @@ func (u *User) Create(r *http.Request) string {
 
 	txn := db.Txn(true)
 
-	if err := txn.Insert("users", u); err != nil {
+	if err := txn.Insert("users", user); err != nil {
 		return "Error add user"
 	}
 
@@ -181,7 +181,7 @@ func (u *User) Update(r *http.Request) string {
 
 	txn = db.Txn(true)
 
-	if err := txn.Insert("users", u); err != nil {
+	if err := txn.Insert("users", user); err != nil {
 		return "Error update user"
 	}
 

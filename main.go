@@ -7,7 +7,6 @@ import (
 	"go_server/entities"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -125,27 +124,40 @@ func main() {
 	w := r.PathPrefix("/review").Subrouter()
 
 	w.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		id, err := strconv.Atoi(vars["id"])
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid request data")
-			return
-		}
-
 		item := entities.Review{}
-		review, err := item.Get(id)
-		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Error getting review")
-			return
-		}
+		review, err := item.Get(r)
 
-		if review == nil {
-			respondWithError(w, http.StatusBadRequest, "Review not found")
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
 			return
 		}
 
 		respondWithJSON(w, http.StatusOK, review)
 	}).Methods("GET")
+
+	w.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+		review := entities.Review{}
+		err := review.Create(r)
+
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
+			return
+		}
+
+		respondWithJSON(w, http.StatusOK, "{}")
+	}).Methods("POST")
+
+	w.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		review := entities.Review{}
+		err := review.Update(r)
+
+		if err != "" {
+			respondWithError(w, http.StatusBadRequest, err)
+			return
+		}
+
+		respondWithJSON(w, http.StatusOK, "{}")
+	}).Methods("POST")
 
 	err := http.ListenAndServe(":8080", r) // задаем слушать порт
 	if err != nil {
