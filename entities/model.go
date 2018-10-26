@@ -5,6 +5,7 @@ import (
 	"github.com/mux"
 	"go_server/database"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"strconv"
 )
@@ -175,4 +176,113 @@ func (m *Model) Update(r *http.Request) string {
 	txn.Commit()
 
 	return ""
+}
+
+func (m *Model) GetMark(r *http.Request) (interface{}, int, string) {
+	sum := uint(0)
+	i := 0
+	from := uint(0)
+	to := ^uint(0)
+	var resp interface{}
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		return 0, 400, "Invalid request data"
+	}
+
+	parameters := r.URL.Query()
+
+	fromDateParam := ""
+	arFromDate, _ := parameters["fromDate"]
+	if len(arFromDate) > 0 {
+		fromDateParam = arFromDate[0]
+	}
+
+	if fromDateParam != "" {
+		fromDate, err := strconv.Atoi(fromDateParam)
+		if err != nil {
+			return 0, 400, "Invalid request data"
+		} else {
+			from = uint(fromDate)
+		}
+	}
+
+	toDateParam := ""
+	arToDate, _ := parameters["toDate"]
+	if len(arToDate) > 0 {
+		toDateParam = arToDate[0]
+	}
+
+	if toDateParam != "" {
+		toDate, err := strconv.Atoi(toDateParam)
+		if err != nil {
+			return 0, 400, "Invalid request data"
+		} else {
+			to = uint(toDate)
+		}
+	}
+
+	sexParam := ""
+	arSex, _ := parameters["sex"]
+	if len(arSex) > 0 {
+		sexParam = arSex[0]
+		if sexParam != "male" && sexParam != "female" {
+			return 0, 400, "Invalid request data"
+		}
+	}
+
+	db := database.GetStorage()
+
+	txn := db.Txn(false)
+
+	raw, err := txn.Get("reviews", "model", uint(id))
+	if err != nil {
+		return 0, 400, "Error getting model"
+	}
+
+	found := false
+
+	for item := raw.Next(); item != nil; item = raw.Next() {
+		found = true
+		if item.(*Review).Created > from && item.(*Review).Created < to {
+			if sexParam != "" {
+				rawUser, err := txn.First("users", "id", item.(*Review).User)
+				if err != nil {
+					return 0, 400, "Error getting user"
+				}
+				if sexParam == rawUser.(*User).Sex {
+					sum += item.(*Review).Mark
+					i += 1
+				}
+			} else {
+				sum += item.(*Review).Mark
+				i += 1
+			}
+		}
+	}
+
+	if found == false {
+		return 0, 404, "Model not found"
+	}
+
+	var mark float64
+
+	if i == 0 {
+		mark = 0
+	} else {
+		mark = float64(sum) / float64(i)
+		var round float64
+		pow := math.Pow(10, float64(5))
+		digit := pow * mark
+		round = math.Ceil(digit)
+		mark = round / pow
+	}
+
+	resp = struct {
+		Mark float64 `json:"mark"`
+	}{Mark: mark}
+
+	return resp, 200, ""
 }

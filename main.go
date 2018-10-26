@@ -17,7 +17,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	response, _ := json.Marshal(payload)
 
 	w.Header().Set("Content-Type", "application/json")
-	//w.WriteHeader(code)
+	w.WriteHeader(code)
 	w.Write(response)
 }
 
@@ -44,10 +44,15 @@ func main() {
 	}).Methods("GET")
 
 	s.HandleFunc("/{id}/mark", func(w http.ResponseWriter, r *http.Request) {
-
 		model := entities.Model{}
+		count, code, err := model.GetMark(r)
 
-		respondWithJSON(w, http.StatusOK, model)
+		if err != "" {
+			respondWithError(w, code, err)
+			return
+		}
+
+		respondWithJSON(w, code, count)
 	}).Methods("GET")
 
 	// ADD
@@ -192,7 +197,25 @@ func TestData() {
 		Id:      1,
 		User:    1,
 		Model:   1,
-		Created: 123,
+		Created: 1000,
+		Mark:    1,
+	}
+	txn.Insert("reviews", rv)
+
+	rv = &entities.Review{
+		Id:      2,
+		User:    1,
+		Model:   1,
+		Created: 2000,
+		Mark:    3,
+	}
+	txn.Insert("reviews", rv)
+
+	rv = &entities.Review{
+		Id:      3,
+		User:    1,
+		Model:   1,
+		Created: 2000,
 		Mark:    3,
 	}
 	txn.Insert("reviews", rv)
