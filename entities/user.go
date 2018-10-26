@@ -189,3 +189,83 @@ func (u *User) Update(r *http.Request) string {
 
 	return ""
 }
+
+func (u *User) GetReviews(r *http.Request) (interface{}, int, string) {
+	arReviews := make([]*Review, 0)
+	var resp interface{}
+	from := uint(0)
+	to := ^uint(0)
+
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		return 0, 400, "Invalid request data"
+	}
+
+	parameters := r.URL.Query()
+
+	fromDateParam := ""
+	arFromDate, _ := parameters["fromDate"]
+	if len(arFromDate) > 0 {
+		fromDateParam = arFromDate[0]
+	}
+
+	if fromDateParam != "" {
+		fromDate, err := strconv.Atoi(fromDateParam)
+		if err != nil {
+			return 0, 400, "Invalid request data"
+		} else {
+			from = uint(fromDate)
+		}
+	}
+
+	toDateParam := ""
+	arToDate, _ := parameters["toDate"]
+	if len(arToDate) > 0 {
+		toDateParam = arToDate[0]
+	}
+
+	if toDateParam != "" {
+		toDate, err := strconv.Atoi(toDateParam)
+		if err != nil {
+			return 0, 400, "Invalid request data"
+		} else {
+			to = uint(toDate)
+		}
+	}
+
+	db := database.GetStorage()
+
+	txn := db.Txn(false)
+
+	raw, err := txn.Get("reviews", "user", uint(id))
+	if err != nil {
+		return 0, 400, "Error getting reviews"
+	}
+
+	found := false
+
+	for item := raw.Next(); item != nil; item = raw.Next() {
+		found = true
+		if item.(*Review).Created > from && item.(*Review).Created < to {
+			arReviews = append(arReviews, item.(*Review))
+		}
+	}
+
+	if found == false {
+		rawUser, err := txn.First("users", "id", uint(id))
+		if err != nil {
+			return 0, 400, "Error getting user"
+		}
+		if rawUser == nil {
+			return 0, 404, "User not found"
+		}
+	}
+
+	resp = struct {
+		Reviews []*Review `json:"reviews"`
+	}{Reviews: arReviews}
+
+	return resp, 200, ""
+}

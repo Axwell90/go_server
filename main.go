@@ -55,7 +55,6 @@ func main() {
 		respondWithJSON(w, code, count)
 	}).Methods("GET")
 
-	// ADD
 	s.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
 		model := entities.Model{}
 		err := model.Create(r)
@@ -68,7 +67,6 @@ func main() {
 		respondWithJSON(w, http.StatusOK, "{}")
 	}).Methods("POST")
 
-	// EDIT
 	s.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
 
 		model := entities.Model{}
@@ -98,8 +96,15 @@ func main() {
 
 	q.HandleFunc("/{id}/reviews", func(w http.ResponseWriter, r *http.Request) {
 
-		model := entities.Model{}
-		respondWithJSON(w, http.StatusOK, model)
+		user := entities.User{}
+		reviews, code, err := user.GetReviews(r)
+
+		if err != "" {
+			respondWithError(w, code, err)
+			return
+		}
+
+		respondWithJSON(w, code, reviews)
 	}).Methods("GET")
 
 	q.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
@@ -222,15 +227,3 @@ func TestData() {
 
 	txn.Commit()
 }
-
-/*
-GET /<entity>/<id>
-
-GET /user/<id>/reviews
-
-GET /model/<id>/mark
-
-POST /<entity>/<id>
-
-POST /<entity>
-*/
