@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/mux"
+	"github.com/gorilla/mux"
 	"go_server/database"
 	"go_server/entities"
 	"log"

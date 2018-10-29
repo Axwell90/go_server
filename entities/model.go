@@ -2,7 +2,7 @@ package entities
 
 import (
 	"encoding/json"
-	"github.com/mux"
+	"github.com/gorilla/mux"
 	"go_server/database"
 	"io/ioutil"
 	"math"
